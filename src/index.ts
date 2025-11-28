@@ -1,11 +1,8 @@
 import express from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import bodyParser from "body-parser";
 import authRouter from "./routes/auth.ts";
 import documentsRouter from "./routes/documents.ts";
-
-dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 4000;
