@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { pool } from "../db.js";
+import { prisma } from "../db.js";
 import { authenticateToken } from "../middleware/auth.js";
 
 const router = Router();
@@ -19,12 +19,19 @@ router.post("/", async (req, res) => {
   const emptyBuffer = Buffer.alloc(0);
 
   try {
-    const result = await pool.query(
-      "INSERT INTO documents (title, owner_id, yjs_state_blob, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING id, title",
-      [docTitle, userId, emptyBuffer]
-    );
+    const doc = await prisma.document.create({
+      data: {
+        title: docTitle,
+        owner_id: userId,
+        yjs_state_blob: emptyBuffer,
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
 
-    return res.status(201).json(result.rows[0]);
+    return res.status(201).json(doc);
   } catch (err) {
     console.error("Error creating document", err);
     return res.status(500).json({ error: "Internal server error" });
@@ -39,12 +46,21 @@ router.get("/", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      "SELECT id, title, updated_at FROM documents WHERE owner_id = $1 ORDER BY updated_at DESC",
-      [userId]
-    );
+    const docs = await prisma.document.findMany({
+      where: {
+        owner_id: userId,
+      },
+      select: {
+        id: true,
+        title: true,
+        updated_at: true,
+      },
+      orderBy: {
+        updated_at: "desc",
+      },
+    });
 
-    return res.status(200).json(result.rows);
+    return res.status(200).json(docs);
   } catch (err) {
     console.error("Error fetching documents", err);
     return res.status(500).json({ error: "Internal server error" });
@@ -60,16 +76,16 @@ router.get("/:id", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      "SELECT id, title, owner_id, yjs_state_blob, created_at, updated_at FROM documents WHERE id = $1 AND owner_id = $2",
-      [id, userId]
-    );
+    const doc = await prisma.document.findFirst({
+      where: {
+        id: parseInt(id),
+        owner_id: userId,
+      },
+    });
 
-    if (result.rowCount === 0) {
+    if (!doc) {
       return res.status(404).json({ error: "Document not found" });
     }
-
-    const doc = result.rows[0];
 
     return res.status(200).json(doc);
   } catch (err) {

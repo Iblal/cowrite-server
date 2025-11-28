@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { pool } from "../db.js";
+import { prisma } from "../db.js";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET || "changeme";
@@ -17,17 +17,24 @@ router.post("/register", async (req, res) => {
   try {
     const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
 
-    const result = await pool.query(
-      "INSERT INTO users (email, password_hash, created_at) VALUES ($1, $2, NOW()) RETURNING id, email, created_at",
-      [email, passwordHash]
-    );
+    const user = await prisma.user.create({
+      data: {
+        email,
+        password_hash: passwordHash,
+      },
+      select: {
+        id: true,
+        email: true,
+        created_at: true,
+      },
+    });
 
     return res.status(201).json({
       message: "User registered successfully",
-      user: result.rows[0],
+      user,
     });
   } catch (err: any) {
-    if (err.code === "23505") {
+    if (err.code === "P2002") {
       return res.status(409).json({ error: "Email already in use" });
     }
     console.error("Error registering user", err);
@@ -43,20 +50,13 @@ router.post("/login", async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      "SELECT id, email, password_hash FROM users WHERE email = $1",
-      [email]
-    );
+    const user = await prisma.user.findUnique({
+      where: { email },
+    });
 
-    if (result.rowCount === 0) {
+    if (!user) {
       return res.status(401).json({ error: "Invalid email or password" });
     }
-
-    const user = result.rows[0] as {
-      id: number;
-      email: string;
-      password_hash: string;
-    };
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
