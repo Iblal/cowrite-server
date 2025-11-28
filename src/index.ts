@@ -5,7 +5,11 @@ import authRouter from "./routes/auth.ts";
 import documentsRouter from "./routes/documents.ts";
 
 const app = express();
-const port = process.env.PORT || 4000;
+const port = process.env.PORT;
+
+if (!port) {
+  throw new Error("PORT environment variable is not defined");
+}
 
 app.use(
   cors({
