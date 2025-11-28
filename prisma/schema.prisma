@@ -1,0 +1,33 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id            Int        @id @default(autoincrement())
+  email         String     @unique
+  password_hash String
+  created_at    DateTime   @default(now())
+
+  documents     Document[]
+  
+  @@map("users")
+}
+
+model Document {
+  id            Int        @id @default(autoincrement())
+  title         String     @default("Untitled Document")
+  owner_id      Int
+  
+  yjs_state_blob Bytes    
+  
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  owner         User     @relation(fields: [owner_id], references: [id])
+
+  @@map("documents")
+}
