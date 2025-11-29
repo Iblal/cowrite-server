@@ -1,6 +1,7 @@
 import { Router } from "express";
 import { prisma } from "../db.js";
 import { authenticateToken } from "../middleware/auth.js";
+import log from "../utils/logger.ts";
 
 const router = Router();
 
@@ -33,7 +34,7 @@ router.post("/", async (req, res) => {
 
     return res.status(201).json(doc);
   } catch (err) {
-    console.error("Error creating document", err);
+    log.error(err, "Error creating document");
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -62,7 +63,7 @@ router.get("/", async (req, res) => {
 
     return res.status(200).json(docs);
   } catch (err) {
-    console.error("Error fetching documents", err);
+    log.error(err, "Error fetching documents");
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -89,7 +90,7 @@ router.get("/:id", async (req, res) => {
 
     return res.status(200).json(doc);
   } catch (err) {
-    console.error("Error fetching document", err);
+    log.error(err, "Error fetching document");
     return res.status(500).json({ error: "Internal server error" });
   }
 });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { prisma } from "../db.js";
+import log from "../utils/logger.ts";
 
 const router = Router();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -41,7 +42,7 @@ router.post("/register", async (req, res) => {
     if (err.code === "P2002") {
       return res.status(409).json({ error: "Email already in use" });
     }
-    console.error("Error registering user", err);
+    log.error(err, "Error registering user");
     return res.status(500).json({ error: "Internal server error" });
   }
 });
@@ -71,7 +72,7 @@ router.post("/login", async (req, res) => {
 
     return res.status(200).json({ token });
   } catch (err) {
-    console.error("Error logging in", err);
+    log.error(err, "Error logging in");
     return res.status(500).json({ error: "Internal server error" });
   }
 });
