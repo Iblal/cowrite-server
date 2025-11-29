@@ -8,6 +8,7 @@ const prismaMock = vi.hoisted(() => ({
     create: vi.fn(),
     findMany: vi.fn(),
     findFirst: vi.fn(),
+    update: vi.fn(),
   },
 }));
 
@@ -40,6 +41,7 @@ describe("documents routes", () => {
     prismaMock.document.create.mockReset();
     prismaMock.document.findMany.mockReset();
     prismaMock.document.findFirst.mockReset();
+    prismaMock.document.update.mockReset();
   });
 
   it("returns 401 when creating without user context", async () => {
@@ -157,5 +159,47 @@ describe("documents routes", () => {
     expect(res.body.title).toBe("My Doc");
     expect(res.body.owner_id).toBe(101);
     expect(res.body.yjs_state_blob).toEqual({ type: "Buffer", data: [] });
+  });
+
+  it("updates a document successfully", async () => {
+    const existingDoc = {
+      id: 8,
+      owner_id: 101,
+      title: "Old Title",
+      content: "Old Content",
+    };
+    const updatedDoc = {
+      id: 8,
+      owner_id: 101,
+      title: "New Title",
+      content: "New Content",
+    };
+
+    prismaMock.document.findFirst.mockResolvedValue(existingDoc);
+    prismaMock.document.update.mockResolvedValue(updatedDoc);
+
+    const res = await request(app)
+      .put("/8")
+      .send({ title: "New Title", content: "New Content" });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual(updatedDoc);
+    expect(prismaMock.document.findFirst).toHaveBeenCalledWith({
+      where: { id: 8, owner_id: 101 },
+    });
+    expect(prismaMock.document.update).toHaveBeenCalledWith({
+      where: { id: 8 },
+      data: { title: "New Title", content: "New Content" },
+    });
+  });
+
+  it("returns 404 when updating a non-existent document", async () => {
+    prismaMock.document.findFirst.mockResolvedValue(null);
+
+    const res = await request(app).put("/999").send({ title: "New Title" });
+
+    expect(res.status).toBe(404);
+    expect(res.body).toEqual({ error: "Document not found" });
+    expect(prismaMock.document.update).not.toHaveBeenCalled();
   });
 });

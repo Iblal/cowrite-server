@@ -98,4 +98,44 @@ router.get("/:id", async (req, res) => {
   }
 });
 
+router.put("/:id", async (req, res) => {
+  const userId = req.userId;
+  const { id } = req.params;
+  const { title, content } = req.body;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    // First check if document exists and belongs to user
+    const existingDoc = await prisma.document.findFirst({
+      where: {
+        id: parseInt(id),
+        owner_id: userId,
+      },
+    });
+
+    if (!existingDoc) {
+      return res.status(404).json({ error: "Document not found" });
+    }
+
+    const updateData: any = {};
+    if (title !== undefined) updateData.title = title;
+    if (content !== undefined) updateData.content = content;
+
+    const updatedDoc = await prisma.document.update({
+      where: {
+        id: parseInt(id),
+      },
+      data: updateData,
+    });
+
+    return res.status(200).json(updatedDoc);
+  } catch (err) {
+    log.error(err, "Error updating document");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default router;
