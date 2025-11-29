@@ -1,7 +1,7 @@
 import { Router } from "express";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { prisma } from "../db.js";
+import { prisma } from "../db.ts";
 import log from "../utils/logger.ts";
 
 const router = Router();

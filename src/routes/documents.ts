@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { prisma } from "../db.js";
-import { authenticateToken } from "../middleware/auth.js";
+import { prisma } from "../db.ts";
+import { authenticateToken } from "../middleware/auth.ts";
 import log from "../utils/logger.ts";
 
 const router = Router();
