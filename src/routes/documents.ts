@@ -9,7 +9,7 @@ router.use(authenticateToken);
 
 router.post("/", async (req, res) => {
   const userId = req.userId;
-  const { title } = req.body as { title?: string };
+  const { title, content } = req.body as { title?: string; content?: string };
 
   if (!userId) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -17,6 +17,7 @@ router.post("/", async (req, res) => {
 
   const docTitle =
     title && title.trim().length > 0 ? title : "Untitled Document";
+  const initialContent = typeof content === "string" ? content : "";
   const emptyBuffer = Buffer.alloc(0);
 
   try {
@@ -24,11 +25,13 @@ router.post("/", async (req, res) => {
       data: {
         title: docTitle,
         owner_id: userId,
+        content: initialContent,
         yjs_state_blob: emptyBuffer,
       },
       select: {
         id: true,
         title: true,
+        content: true,
       },
     });
 

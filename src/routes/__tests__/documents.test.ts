@@ -53,7 +53,7 @@ describe("documents routes", () => {
   });
 
   it("creates a document using the fallback title for blank input", async () => {
-    const created = { id: 1, title: "Untitled Document" };
+    const created = { id: 1, title: "Untitled Document", content: "" };
     prismaMock.document.create.mockResolvedValue(created);
 
     const res = await request(app).post("/").send({ title: "   " });
@@ -71,7 +71,33 @@ describe("documents routes", () => {
     expect(args.data.owner_id).toBe(101);
     expect(Buffer.isBuffer(args.data.yjs_state_blob)).toBe(true);
     expect(args.data.yjs_state_blob.length).toBe(0);
-    expect(args.select).toEqual({ id: true, title: true });
+    expect(args.data.content).toBe("");
+    expect(args.select).toEqual({ id: true, title: true, content: true });
+  });
+
+  it("creates a document with provided content", async () => {
+    const created = {
+      id: 2,
+      title: "My Doc",
+      content: "Hello world",
+    };
+    prismaMock.document.create.mockResolvedValue(created);
+
+    const res = await request(app)
+      .post("/")
+      .send({ title: "My Doc", content: "Hello world" });
+
+    expect(res.status).toBe(201);
+    expect(res.body).toEqual(created);
+    expect(prismaMock.document.create).toHaveBeenCalledTimes(1);
+
+    const callArgs = prismaMock.document.create.mock.calls[0];
+    if (!callArgs) {
+      throw new Error("document.create was not called");
+    }
+    const [args] = callArgs;
+    expect(args.data.title).toBe("My Doc");
+    expect(args.data.content).toBe("Hello world");
   });
 
   it("lists documents for the authenticated user", async () => {

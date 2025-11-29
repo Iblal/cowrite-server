@@ -52,7 +52,9 @@ describe("auth routes", () => {
       .send({ password: "abc" });
 
     expect(response.status).toBe(400);
-    expect(response.body).toEqual({ error: "Email and password are required" });
+    expect(response.body).toEqual({
+      error: "Email, password, and name are required",
+    });
     expect(prismaMock.user.create).not.toHaveBeenCalled();
   });
 
