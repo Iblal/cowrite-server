@@ -23,6 +23,8 @@ model Document {
   title         String     @default("Untitled Document")
   owner_id      Int
   
+  content       String     @default("")
+  
   yjs_state_blob Bytes    
   
   created_at    DateTime @default(now())
