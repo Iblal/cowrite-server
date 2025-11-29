@@ -3,7 +3,7 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import authRouter from "./routes/auth.ts";
 import documentsRouter from "./routes/documents.ts";
-import log from "./logger.ts";
+import log from "./utils/logger.ts";
 
 const app = express();
 const port = process.env.PORT;
