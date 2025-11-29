@@ -13,10 +13,16 @@ if (!JWT_SECRET) {
 const SALT_ROUNDS = 10;
 
 router.post("/register", async (req, res) => {
-  const { email, password } = req.body as { email?: string; password?: string };
+  const { email, password, name } = req.body as {
+    email?: string;
+    password?: string;
+    name?: string;
+  };
 
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required" });
+  if (!email || !password || !name) {
+    return res
+      .status(400)
+      .json({ error: "Email, password, and name are required" });
   }
 
   try {
@@ -26,10 +32,12 @@ router.post("/register", async (req, res) => {
       data: {
         email,
         password_hash: passwordHash,
+        name,
       },
       select: {
         id: true,
         email: true,
+        name: true,
         created_at: true,
       },
     });
