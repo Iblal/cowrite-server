@@ -79,8 +79,6 @@ router.post("/login", async (req, res) => {
       return res.status(401).json({ error: "Invalid email or password" });
     }
 
-    //Testing commit contribution
-
     const token = jwt.sign({ id: user.id }, JWT_SECRET, { expiresIn: "7d" });
 
     return res.status(200).json({
