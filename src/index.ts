@@ -5,8 +5,12 @@ import cors from "cors";
 import authRouter from "./routes/auth.ts";
 import documentsRouter from "./routes/documents.ts";
 import log from "./utils/logger.ts";
+import expressWebSockets from "express-ws";
+import { Hocuspocus } from "@hocuspocus/server";
 
-const app = express();
+const hocuspocus = new Hocuspocus();
+
+const { app } = expressWebSockets(express());
 const port = process.env.PORT;
 
 if (!port) {
@@ -22,6 +26,10 @@ app.use("/api/documents", documentsRouter);
 
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+app.ws("/collaboration", (websocket, request) => {
+  hocuspocus.handleConnection(websocket, request);
 });
 
 app.listen(port, () => {
