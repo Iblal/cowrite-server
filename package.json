@@ -16,6 +16,7 @@
   "type": "module",
   "dependencies": {
     "@hocuspocus/server": "^3.4.0",
+    "@hocuspocus/extension-database": "^3.4.0",
     "@prisma/adapter-pg": "^7.0.1",
     "@prisma/client": "^7.0.1",
     "bcrypt": "^6.0.0",
