@@ -9,7 +9,7 @@ router.use(authenticateToken);
 
 router.post("/", async (req, res) => {
   const userId = req.userId;
-  const { title, content } = req.body as { title?: string; content?: string };
+  const { title } = req.body as { title?: string };
 
   if (!userId) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -17,7 +17,6 @@ router.post("/", async (req, res) => {
 
   const docTitle =
     title && title.trim().length > 0 ? title : "Untitled Document";
-  const initialContent = typeof content === "string" ? content : "";
   const emptyBuffer = Buffer.alloc(0);
 
   try {
@@ -25,13 +24,11 @@ router.post("/", async (req, res) => {
       data: {
         title: docTitle,
         owner_id: userId,
-        content: initialContent,
         yjs_state_blob: emptyBuffer,
       },
       select: {
         id: true,
         title: true,
-        content: true,
       },
     });
 
@@ -101,7 +98,7 @@ router.get("/:id", async (req, res) => {
 router.put("/:id", async (req, res) => {
   const userId = req.userId;
   const { id } = req.params;
-  const { title, content } = req.body;
+  const { title } = req.body;
 
   if (!userId) {
     return res.status(401).json({ error: "Unauthorized" });
@@ -120,15 +117,13 @@ router.put("/:id", async (req, res) => {
       return res.status(404).json({ error: "Document not found" });
     }
 
-    const updateData: any = {};
-    if (title !== undefined) updateData.title = title;
-    if (content !== undefined) updateData.content = content;
-
     const updatedDoc = await prisma.document.update({
       where: {
         id: parseInt(id),
       },
-      data: updateData,
+      data: {
+        title: title ?? existingDoc.title,
+      },
     });
 
     return res.status(200).json(updatedDoc);

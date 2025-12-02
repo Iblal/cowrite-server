@@ -55,7 +55,7 @@ describe("documents routes", () => {
   });
 
   it("creates a document using the fallback title for blank input", async () => {
-    const created = { id: 1, title: "Untitled Document", content: "" };
+    const created = { id: 1, title: "Untitled Document" };
     prismaMock.document.create.mockResolvedValue(created);
 
     const res = await request(app).post("/").send({ title: "   " });
@@ -73,21 +73,17 @@ describe("documents routes", () => {
     expect(args.data.owner_id).toBe(101);
     expect(Buffer.isBuffer(args.data.yjs_state_blob)).toBe(true);
     expect(args.data.yjs_state_blob.length).toBe(0);
-    expect(args.data.content).toBe("");
-    expect(args.select).toEqual({ id: true, title: true, content: true });
+    expect(args.select).toEqual({ id: true, title: true });
   });
 
-  it("creates a document with provided content", async () => {
+  it("creates a document with provided title", async () => {
     const created = {
       id: 2,
       title: "My Doc",
-      content: "Hello world",
     };
     prismaMock.document.create.mockResolvedValue(created);
 
-    const res = await request(app)
-      .post("/")
-      .send({ title: "My Doc", content: "Hello world" });
+    const res = await request(app).post("/").send({ title: "My Doc" });
 
     expect(res.status).toBe(201);
     expect(res.body).toEqual(created);
@@ -99,7 +95,6 @@ describe("documents routes", () => {
     }
     const [args] = callArgs;
     expect(args.data.title).toBe("My Doc");
-    expect(args.data.content).toBe("Hello world");
   });
 
   it("lists documents for the authenticated user", async () => {
@@ -166,21 +161,17 @@ describe("documents routes", () => {
       id: 8,
       owner_id: 101,
       title: "Old Title",
-      content: "Old Content",
     };
     const updatedDoc = {
       id: 8,
       owner_id: 101,
       title: "New Title",
-      content: "New Content",
     };
 
     prismaMock.document.findFirst.mockResolvedValue(existingDoc);
     prismaMock.document.update.mockResolvedValue(updatedDoc);
 
-    const res = await request(app)
-      .put("/8")
-      .send({ title: "New Title", content: "New Content" });
+    const res = await request(app).put("/8").send({ title: "New Title" });
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual(updatedDoc);
@@ -189,7 +180,7 @@ describe("documents routes", () => {
     });
     expect(prismaMock.document.update).toHaveBeenCalledWith({
       where: { id: 8 },
-      data: { title: "New Title", content: "New Content" },
+      data: { title: "New Title" },
     });
   });
 
