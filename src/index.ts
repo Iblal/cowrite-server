@@ -18,38 +18,20 @@ const hocuspocusServer = new Server({
     new Database({
       fetch: async ({ documentName }) => {
         const id = Number(documentName);
-        if (isNaN(id)) {
-          log.warn(`Invalid document name for fetch: ${documentName}`);
-          return null;
-        }
-
-        log.info(`Fetching Yjs state for document ID: ${id}`);
+        if (isNaN(id)) return null;
 
         const document = await prisma.document.findUnique({
           where: { id },
           select: { yjs_state_blob: true },
         });
 
-        if (document?.yjs_state_blob && document.yjs_state_blob.length > 0) {
-          log.info(
-            `Loaded Yjs state for document ${id} (${document.yjs_state_blob.length} bytes)`
-          );
-          return document.yjs_state_blob;
-        } else {
-          log.info(`No existing Yjs state found for document ${id}`);
-          return null;
-        }
+        return document?.yjs_state_blob && document.yjs_state_blob.length > 0
+          ? document.yjs_state_blob
+          : null;
       },
       store: async ({ documentName, state }) => {
         const id = Number(documentName);
-        if (isNaN(id)) {
-          log.warn(`Invalid document name for store: ${documentName}`);
-          return;
-        }
-
-        log.info(
-          `Saving Yjs state for document ${id} (${state.length} bytes)...`
-        );
+        if (isNaN(id)) return;
 
         try {
           await prisma.document.update({
@@ -58,9 +40,8 @@ const hocuspocusServer = new Server({
               yjs_state_blob: Buffer.from(state),
             },
           });
-          log.info(`Successfully saved Yjs state for document ${id}`);
         } catch (err) {
-          log.error(err, `Failed to save document ${documentName}`);
+          log.error(`Failed to save document ${documentName}`);
         }
       },
     }),
