@@ -77,10 +77,16 @@ router.get("/:id", async (req, res) => {
   }
 
   try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
     const doc = await prisma.document.findFirst({
       where: {
         id: parseInt(id),
-        owner_id: userId,
+        OR: [
+          { owner_id: userId },
+          { collaborators: { some: { email: user.email } } },
+        ],
       },
       include: {
         owner: {
@@ -89,6 +95,7 @@ router.get("/:id", async (req, res) => {
             email: true,
           },
         },
+        collaborators: true,
       },
     });
 
@@ -96,7 +103,18 @@ router.get("/:id", async (req, res) => {
       return res.status(404).json({ error: "Document not found" });
     }
 
-    return res.status(200).json(doc);
+    // Determine current user's permission
+    let permission = "read";
+    if (doc.owner_id === userId) {
+      permission = "owner";
+    } else {
+      const collaborator = doc.collaborators.find(
+        (c) => c.email === user.email
+      );
+      if (collaborator) permission = collaborator.permission;
+    }
+
+    return res.status(200).json({ ...doc, currentUserPermission: permission });
   } catch (err) {
     log.error(err, "Error fetching document");
     return res.status(500).json({ error: "Internal server error" });
@@ -137,6 +155,42 @@ router.put("/:id", async (req, res) => {
     return res.status(200).json(updatedDoc);
   } catch (err) {
     log.error(err, "Error updating document");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.post("/:id/share", async (req, res) => {
+  const userId = req.userId;
+  const { id } = req.params;
+  const { email, permission } = req.body;
+
+  if (!userId) return res.status(401).json({ error: "Unauthorized" });
+
+  try {
+    const doc = await prisma.document.findFirst({
+      where: { id: parseInt(id), owner_id: userId },
+    });
+
+    if (!doc) return res.status(403).json({ error: "Not authorized" });
+
+    const collaborator = await prisma.collaborator.upsert({
+      where: {
+        document_id_email: {
+          document_id: parseInt(id),
+          email: email,
+        },
+      },
+      update: { permission },
+      create: {
+        document_id: parseInt(id),
+        email,
+        permission,
+      },
+    });
+
+    return res.status(200).json(collaborator);
+  } catch (err) {
+    log.error(err, "Error sharing document");
     return res.status(500).json({ error: "Internal server error" });
   }
 });
