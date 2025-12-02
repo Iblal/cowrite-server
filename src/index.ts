@@ -5,13 +5,18 @@ import cors from "cors";
 import authRouter from "./routes/auth.ts";
 import documentsRouter from "./routes/documents.ts";
 import log from "./utils/logger.ts";
-import expressWebSockets from "express-ws";
-import { Hocuspocus } from "@hocuspocus/server";
+import { Server } from "@hocuspocus/server";
 
-const hocuspocus = new Hocuspocus();
-
-const { app } = expressWebSockets(express());
+// Assumption: Hocuspocus documentName sent by the client matches the numeric Document.id in the database.
+// If that differs (e.g. you use a UUID or slug), adjust the fetch/store queries accordingly.
 const port = process.env.PORT;
+const hocusPort = Number(process.env.HOCUS_PORT || Number(port) + 1);
+
+const hocuspocusServer = new Server({
+  port: hocusPort,
+});
+
+const app = express();
 
 if (!port) {
   throw new Error("PORT environment variable is not defined");
@@ -28,10 +33,10 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-app.ws("/collaboration", (websocket, request) => {
-  hocuspocus.handleConnection(websocket, request);
-});
+// Start collaboration server on its own port
+hocuspocusServer.listen();
 
 app.listen(port, () => {
   log.info(`Server is running on port ${port}`);
+  log.info(`Hocuspocus collaboration server listening on port ${hocusPort}`);
 });
