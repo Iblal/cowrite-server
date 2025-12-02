@@ -25,7 +25,7 @@ model Document {
   
   content       String     @default("")
   
-  yjs_state_blob Bytes    
+  yjs_state_blob Bytes?    
   
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
