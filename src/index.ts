@@ -7,8 +7,6 @@ import documentsRouter from "./routes/documents.ts";
 import log from "./utils/logger.ts";
 import { Server } from "@hocuspocus/server";
 
-// Assumption: Hocuspocus documentName sent by the client matches the numeric Document.id in the database.
-// If that differs (e.g. you use a UUID or slug), adjust the fetch/store queries accordingly.
 const port = process.env.PORT;
 const hocusPort = Number(process.env.HOCUS_PORT || Number(port) + 1);
 
