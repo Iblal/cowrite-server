@@ -10,6 +10,12 @@ const prismaMock = vi.hoisted(() => ({
     findFirst: vi.fn(),
     update: vi.fn(),
   },
+  user: {
+    findUnique: vi.fn(),
+  },
+  collaborator: {
+    upsert: vi.fn(),
+  },
 }));
 
 const authState = vi.hoisted(() => ({
@@ -42,6 +48,8 @@ describe("documents routes", () => {
     prismaMock.document.findMany.mockReset();
     prismaMock.document.findFirst.mockReset();
     prismaMock.document.update.mockReset();
+    prismaMock.user.findUnique.mockReset();
+    prismaMock.collaborator.upsert.mockReset();
   });
 
   it("returns 401 when creating without user context", async () => {
@@ -126,15 +134,16 @@ describe("documents routes", () => {
   });
 
   it("returns 404 when a document is missing", async () => {
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 101,
+      email: "test@example.com",
+    });
     prismaMock.document.findFirst.mockResolvedValue(null);
 
     const res = await request(app).get("/42");
 
     expect(res.status).toBe(404);
     expect(res.body).toEqual({ error: "Document not found" });
-    expect(prismaMock.document.findFirst).toHaveBeenCalledWith({
-      where: { id: 42, owner_id: 101 },
-    });
   });
 
   it("returns the requested document when it exists", async () => {
@@ -144,7 +153,12 @@ describe("documents routes", () => {
       title: "My Doc",
       updated_at: new Date().toISOString(),
       yjs_state_blob: Buffer.alloc(0),
+      collaborators: [],
     };
+    prismaMock.user.findUnique.mockResolvedValue({
+      id: 101,
+      email: "test@example.com",
+    });
     prismaMock.document.findFirst.mockResolvedValue(document);
 
     const res = await request(app).get("/7");

@@ -68,6 +68,48 @@ router.get("/", async (req, res) => {
   }
 });
 
+router.get("/shared", async (req, res) => {
+  const userId = req.userId;
+
+  if (!userId) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const docs = await prisma.document.findMany({
+      where: {
+        collaborators: {
+          some: {
+            email: user.email,
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        updated_at: true,
+        owner: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        updated_at: "desc",
+      },
+    });
+
+    return res.status(200).json(docs);
+  } catch (err) {
+    log.error(err, "Error fetching shared documents");
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 router.get("/:id", async (req, res) => {
   const userId = req.userId;
   const { id } = req.params;
