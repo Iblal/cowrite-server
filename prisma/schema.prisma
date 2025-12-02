@@ -29,6 +29,19 @@ model Document {
   updated_at    DateTime @updatedAt
 
   owner         User     @relation(fields: [owner_id], references: [id])
+  collaborators Collaborator[]
 
   @@map("documents")
+}
+
+model Collaborator {
+  id          Int      @id @default(autoincrement())
+  document_id Int
+  document    Document @relation(fields: [document_id], references: [id])
+  email       String
+  permission  String   // "read" or "write"
+  created_at  DateTime @default(now())
+
+  @@unique([document_id, email])
+  @@map("collaborators")
 }
