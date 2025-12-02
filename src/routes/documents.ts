@@ -82,6 +82,14 @@ router.get("/:id", async (req, res) => {
         id: parseInt(id),
         owner_id: userId,
       },
+      include: {
+        owner: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
     });
 
     if (!doc) {
