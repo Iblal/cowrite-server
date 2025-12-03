@@ -19,7 +19,7 @@ COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
 
 # Expose API port and Hocuspocus port
-EXPOSE 3001
-EXPOSE 3002
+EXPOSE 5001
+EXPOSE 5002
 
 CMD ["npm", "start"]
