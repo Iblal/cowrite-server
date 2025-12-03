@@ -24,6 +24,7 @@ router.post("/", async (req, res) => {
       data: {
         title: docTitle,
         owner_id: userId,
+        last_edited_by_id: userId,
         yjs_state_blob: emptyBuffer,
       },
       select: {
@@ -51,10 +52,13 @@ router.get("/", async (req, res) => {
       where: {
         owner_id: userId,
       },
-      select: {
-        id: true,
-        title: true,
-        updated_at: true,
+      include: {
+        last_edited_by: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: {
         updated_at: "desc",
@@ -87,10 +91,13 @@ router.get("/shared", async (req, res) => {
           },
         },
       },
-      select: {
-        id: true,
-        title: true,
-        updated_at: true,
+      include: {
+        last_edited_by: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
         owner: {
           select: {
             name: true,
@@ -132,6 +139,12 @@ router.get("/:id", async (req, res) => {
       },
       include: {
         owner: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+        last_edited_by: {
           select: {
             name: true,
             email: true,
