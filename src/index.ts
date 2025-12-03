@@ -8,6 +8,7 @@ import log from "./utils/logger.ts";
 import { startHocuspocusServer } from "./hocuspocus.ts";
 
 const port = process.env.PORT;
+const clientUrl = process.env.CLIENT_URL;
 
 const app = express();
 
@@ -15,7 +16,11 @@ if (!port) {
   throw new Error("PORT environment variable is not defined");
 }
 
-const allowedOrigins = [process.env.CLIENT_URL || "http://localhost:5173"];
+if (!clientUrl) {
+  throw new Error("CLIENT_URL environment variable is not defined");
+}
+
+const allowedOrigins = [clientUrl];
 
 app.use(
   cors({
