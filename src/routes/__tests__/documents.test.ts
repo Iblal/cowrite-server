@@ -107,8 +107,18 @@ describe("documents routes", () => {
 
   it("lists documents for the authenticated user", async () => {
     const documents = [
-      { id: 5, title: "Doc A", updated_at: "2024-10-10T00:00:00.000Z" },
-      { id: 6, title: "Doc B", updated_at: "2024-10-09T00:00:00.000Z" },
+      {
+        id: 5,
+        title: "Doc A",
+        updated_at: "2024-10-10T00:00:00.000Z",
+        last_edited_by: { name: "Test User", email: "test@test.com" },
+      },
+      {
+        id: 6,
+        title: "Doc B",
+        updated_at: "2024-10-09T00:00:00.000Z",
+        last_edited_by: { name: "Test User", email: "test@test.com" },
+      },
     ];
     prismaMock.document.findMany.mockResolvedValue(documents);
 
@@ -118,7 +128,14 @@ describe("documents routes", () => {
     expect(res.body).toEqual(documents);
     expect(prismaMock.document.findMany).toHaveBeenCalledWith({
       where: { owner_id: 101 },
-      select: { id: true, title: true, updated_at: true },
+      include: {
+        last_edited_by: {
+          select: {
+            name: true,
+            email: true,
+          },
+        },
+      },
       orderBy: { updated_at: "desc" },
     });
   });
