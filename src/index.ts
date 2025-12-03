@@ -77,15 +77,18 @@ const hocuspocusServer = new Server({
           ? document.yjs_state_blob
           : null;
       },
-      store: async ({ documentName, state }) => {
+      store: async ({ documentName, state, context }) => {
         const id = Number(documentName);
         if (isNaN(id)) return;
 
         try {
+          const lastEditorId = (context as any)?.user?.id as number | undefined;
+
           await prisma.document.update({
             where: { id },
             data: {
               yjs_state_blob: Buffer.from(state),
+              ...(lastEditorId ? { last_edited_by_id: lastEditorId } : {}),
             },
           });
         } catch (err) {
