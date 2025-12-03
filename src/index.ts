@@ -15,7 +15,14 @@ if (!port) {
   throw new Error("PORT environment variable is not defined");
 }
 
-app.use(cors());
+const allowedOrigins = [process.env.CLIENT_URL || "http://localhost:5173"];
+
+app.use(
+  cors({
+    origin: allowedOrigins,
+    credentials: true,
+  })
+);
 
 app.use(bodyParser.json());
 
