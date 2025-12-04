@@ -1,68 +1,90 @@
-# ✍️ Cowrite: Collaborative Markdown Editor (MVP)
+# Cowrite Server
 
-## 🌟 Introduction
+The backend server for Cowrite, a real-time collaborative writing application. Built with Node.js, Express, and Hocuspocus.
 
-**Cowrite** is a real-time, collaborative Markdown editor designed to allow users to work on documents simultaneously, completely free of synchronization conflicts.
+## Features
 
-This repository (`cowrite-server`) hosts the **Node.js/Express TypeScript API** and the **WebSocket Server** responsible for handling authentication, document persistence, and broadcasting real-time updates using **Yjs (CRDTs)**.
+- **Real-time Collaboration:** Powered by [Hocuspocus](https://tiptap.dev/hocuspocus) and Yjs for seamless multi-user editing.
+- **REST API:** Express-based API for user authentication and document management.
+- **Database:** PostgreSQL database managed with Prisma ORM.
+- **Authentication:** Secure JWT-based authentication.
 
----
+## Tech Stack
 
-## 💻 Tech Stack & Setup
+- **Runtime:** Node.js
+- **Framework:** Express
+- **Collaboration Server:** Hocuspocus
+- **Database:** PostgreSQL
+- **ORM:** Prisma
+- **Language:** TypeScript
+- **Testing:** Vitest
 
-| Component         | Technology      | Role                                                 |
-| :---------------- | :-------------- | :--------------------------------------------------- |
-| **Runtime**       | **Node.js**     | Server environment.                                  |
-| **Language**      | **TypeScript**  | Type safety and improved scalability.                |
-| **Framework**     | **Express**     | REST API.                                            |
-| **Persistence**   | **PostgreSQL**  | Robust storage for Users and Binary Document States. |
-| **Collaboration** | **Yjs (CRDTs)** | Conflict-free data structure for real-time merging.  |
-| **Real-Time**     | **WebSockets**  | Persistent connection for Yjs updates.               |
+## Getting Started
 
-### Quick Setup
+### Prerequisites
 
-1.  **Clone:** `git clone <server-repo-url> cowrite-server`
-2.  **Install:** `npm install`
-3.  **Config:** Create a **`.env`** file (DB credentials, JWT secret, etc.).
-4.  **DB:** Ensure PostgreSQL is running and initialize `users` and `documents` tables.
-5.  **Run:** `npm start` (Runs `index.ts` via `ts-node`).
+- Node.js (v18 or higher)
+- PostgreSQL
+- npm or yarn
 
----
+### Installation
 
-## 🎯 MVP Requirements
+1.  Navigate to the server directory:
 
-The primary goal is establishing the **Real-Time Collaboration Core** without data loss.
+    ```bash
+    cd cowrite-server
+    ```
 
-| #      | Feature            | Goal                                                                                                  |
-| :----- | :----------------- | :---------------------------------------------------------------------------------------------------- |
-| **M1** | **Authentication** | Users can **register** and **log in** securely via JWT.                                               |
-| **M2** | **Document CRUD**  | Users can **create**, **read a list**, and **read a single** document.                                |
-| **M3** | **Real-Time Sync** | Changes by two simultaneous editors must **merge instantly** and **correctly** using **CRDTs (Yjs)**. |
-| **M4** | **Persistence**    | The final, merged document state (the `yjs_state_blob`) is reliably saved to the database.            |
+2.  Install dependencies:
 
----
+    ```bash
+    npm install
+    ```
 
-## 🔗 API Endpoints
+3.  Set up environment variables:
+    Create a `.env` file in the root directory and add the following:
 
-All endpoints (except Auth) require a **valid JWT** in the `Authorization: Bearer <token>` header.
+    ```env
+    DATABASE_URL="postgresql://user:password@localhost:5432/cowrite?schema=public"
+    JWT_SECRET="your-super-secret-key"
+    PORT=3000
+    ```
 
-### Authentication (`/api/auth`)
+4.  Run database migrations:
+    ```bash
+    npx prisma migrate dev
+    ```
 
-| Method | Endpoint             | Description                           |
-| :----- | :------------------- | :------------------------------------ |
-| `POST` | `/api/auth/register` | Create a new user.                    |
-| `POST` | `/api/auth/login`    | Authenticate user; returns JWT token. |
+### Running the Server
 
-### Document Management (`/api/documents`)
+- **Development Mode:**
 
-| Method | Endpoint             | Description                                         |
-| :----- | :------------------- | :-------------------------------------------------- |
-| `POST` | `/api/documents`     | Create a new document.                              |
-| `GET`  | `/api/documents`     | List documents owned by the user.                   |
-| `GET`  | `/api/documents/:id` | Fetch the metadata and the binary `yjs_state_blob`. |
+  ```bash
+  npm run dev
+  ```
 
-### 📡 WebSocket Endpoint
+- **Production Build:**
+  ```bash
+  npm run build
+  npm start
+  ```
 
-The real-time layer connects here. The JWT must be validated during the initial connection handshake.
+### Testing
 
-- **Endpoint:** `ws://<server-host>:<ws-port>/doc/:id`
+Run the test suite with Vitest:
+
+```bash
+npm test
+```
+
+## API Endpoints
+
+- `POST /auth/register` - Register a new user
+- `POST /auth/login` - Login and receive a JWT
+- `GET /documents` - List user documents
+- `POST /documents` - Create a new document
+- `GET /documents/:id` - Get document details
+
+## WebSocket
+
+The Hocuspocus server runs on the same port, handling WebSocket connections for real-time document syncing.
