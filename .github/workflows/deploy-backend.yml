@@ -1,0 +1,77 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - "prisma/**"
+      - "package.json"
+      - "tsconfig.json"
+      - "Dockerfile"
+  workflow_dispatch:
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPO: ${{ secrets.ECR_REPO }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}
+  ECS_SERVICE: ${{ secrets.ECS_SERVICE }}
+  TASK_DEFINITION: ${{ secrets.TASK_DEFINITION }}
+  CONTAINER_NAME: ${{ secrets.CONTAINER_NAME }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push image
+        run: |
+          IMAGE_URI=${{ steps.ecr.outputs.registry }}/${{ env.ECR_REPO }}:${{ github.sha }}
+          docker build -t "$IMAGE_URI" .
+          docker push "$IMAGE_URI"
+          echo "IMAGE_URI=$IMAGE_URI" >> $GITHUB_ENV
+
+      - name: Update ECS service to new image
+        run: |
+          # Fetch current task definition JSON
+          TASK_DEF_JSON=$(aws ecs describe-task-definition --task-definition "$TASK_DEFINITION" --query 'taskDefinition' --output json)
+
+          # Update the image for the target container
+          NEW_TASK_DEF=$(echo "$TASK_DEF_JSON" \
+            | jq 'del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)' \
+            | jq --arg NAME "$CONTAINER_NAME" --arg IMG "$IMAGE_URI" '
+                .containerDefinitions = (.containerDefinitions | map(if .name == $NAME then .image = $IMG else . end))
+              ')
+
+          # Register the new task definition and update the service
+          REG_OUT=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF")
+          NEW_ARN=$(echo "$REG_OUT" | jq -r .taskDefinition.taskDefinitionArn)
+
+          aws ecs update-service \
+            --cluster "$ECS_CLUSTER" \
+            --service "$ECS_SERVICE" \
+            --task-definition "$NEW_ARN"
+
+          aws ecs wait services-stable --cluster "$ECS_CLUSTER" --services "$ECS_SERVICE"
+
+      - name: Output image URI
+        run: echo "Deployed image $IMAGE_URI"
