@@ -2,6 +2,10 @@
 
 The backend server for Cowrite, a real-time collaborative writing application. Built with Node.js, Express, and Hocuspocus.
 
+Here's a video demo, click to watch 👇📺
+
+[![Cowrite demo](https://img.youtube.com/vi/lJmM6SQlhzI/sddefault.jpg)](https://www.youtube.com/watch?v=lJmM6SQlhzI)
+
 ## Features
 
 - **Real-time Collaboration:** Powered by [Hocuspocus](https://tiptap.dev/hocuspocus) and Yjs for seamless multi-user editing.
